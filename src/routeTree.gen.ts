@@ -14,6 +14,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppTransferRouteImport } from './routes/app.transfer'
+import { Route as AppStatementsRouteImport } from './routes/app.statements'
+import { Route as AppAccountsRouteImport } from './routes/app.accounts'
+import { Route as ApiRiskScoreRouteImport } from './routes/api.risk-score'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,18 +44,46 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTransferRoute = AppTransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStatementsRoute = AppStatementsRouteImport.update({
+  id: '/statements',
+  path: '/statements',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountsRoute = AppAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AppRoute,
+} as any)
+const ApiRiskScoreRoute = ApiRiskScoreRouteImport.update({
+  id: '/api/risk-score',
+  path: '/api/risk-score',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/api/risk-score': typeof ApiRiskScoreRoute
+  '/app/accounts': typeof AppAccountsRoute
+  '/app/statements': typeof AppStatementsRoute
+  '/app/transfer': typeof AppTransferRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/api/risk-score': typeof ApiRiskScoreRoute
+  '/app/accounts': typeof AppAccountsRoute
+  '/app/statements': typeof AppStatementsRoute
+  '/app/transfer': typeof AppTransferRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -60,14 +92,45 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/api/risk-score': typeof ApiRiskScoreRoute
+  '/app/accounts': typeof AppAccountsRoute
+  '/app/statements': typeof AppStatementsRoute
+  '/app/transfer': typeof AppTransferRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/login' | '/signup' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/signup'
+    | '/api/risk-score'
+    | '/app/accounts'
+    | '/app/statements'
+    | '/app/transfer'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/app'
-  id: '__root__' | '/' | '/app' | '/login' | '/signup' | '/app/'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/api/risk-score'
+    | '/app/accounts'
+    | '/app/statements'
+    | '/app/transfer'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/signup'
+    | '/api/risk-score'
+    | '/app/accounts'
+    | '/app/statements'
+    | '/app/transfer'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -75,6 +138,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ApiRiskScoreRoute: typeof ApiRiskScoreRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -114,14 +178,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/transfer': {
+      id: '/app/transfer'
+      path: '/transfer'
+      fullPath: '/app/transfer'
+      preLoaderRoute: typeof AppTransferRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/statements': {
+      id: '/app/statements'
+      path: '/statements'
+      fullPath: '/app/statements'
+      preLoaderRoute: typeof AppStatementsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/accounts': {
+      id: '/app/accounts'
+      path: '/accounts'
+      fullPath: '/app/accounts'
+      preLoaderRoute: typeof AppAccountsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/risk-score': {
+      id: '/api/risk-score'
+      path: '/api/risk-score'
+      fullPath: '/api/risk-score'
+      preLoaderRoute: typeof ApiRiskScoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAccountsRoute: typeof AppAccountsRoute
+  AppStatementsRoute: typeof AppStatementsRoute
+  AppTransferRoute: typeof AppTransferRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountsRoute: AppAccountsRoute,
+  AppStatementsRoute: AppStatementsRoute,
+  AppTransferRoute: AppTransferRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -132,7 +230,17 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ApiRiskScoreRoute: ApiRiskScoreRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
