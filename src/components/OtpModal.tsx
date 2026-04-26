@@ -1,6 +1,7 @@
 // Email OTP step-up modal for MEDIUM-risk transactions.
-// Shows a 6-digit input, retry/cancel controls, expiry countdown,
-// and a clearly-labeled "demo OTP" hint so the flow is testable end-to-end.
+// Uses client-side helpers in src/lib/banking-actions (RLS-protected) so
+// MEDIUM-risk transfers resume after OTP verification without needing
+// server-fn auth-header plumbing.
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -14,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { ShieldAlert, Loader2, RefreshCw, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { issueOtp, verifyOtp } from "@/server/otp.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { issueOtp, verifyOtp } from "@/lib/banking-actions";
+import { useAuth } from "@/lib/auth-context";
 
 interface Props {
   open: boolean;
@@ -26,14 +26,8 @@ interface Props {
   onVerified: () => void;
 }
 
-async function withAuthHeader<T>(fn: () => Promise<T>): Promise<T> {
-  // server fns automatically inject Bearer token via fetch override only if we set headers.
-  // Our auth-middleware reads Authorization header — supabase client does not auto-attach.
-  // We use a small wrapper: call supabase.auth.getSession then attach.
-  return fn();
-}
-
 export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVerified }: Props) {
+  const { user } = useAuth();
   const [code, setCode] = useState("");
   const [issuing, setIssuing] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -42,28 +36,14 @@ export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVeri
   const [now, setNow] = useState(Date.now());
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
-  const issue = useServerFn(issueOtp);
-  const verify = useServerFn(verifyOtp);
-
   const sendCode = async () => {
-    if (!transactionId) return;
+    if (!transactionId || !user) return;
     setIssuing(true);
     setCode("");
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess.session?.access_token;
-      const res = await fetch("/_serverFn/src/server/otp.functions/issueOtp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ data: { transactionId } }),
-      }).then((r) => r.json());
-      // TanStack server fn URL convention isn't stable — fall back to useServerFn helper which handles transport.
-      // Prefer the helper:
-      void res;
-      const result = await withAuthHeader(() => issue({ data: { transactionId }, headers: { Authorization: `Bearer ${token}` } } as never));
-      const r = result as { ok: boolean; devCode?: string; expiresAt?: string };
-      if (r.devCode) setDevCode(r.devCode);
-      if (r.expiresAt) setExpiresAt(new Date(r.expiresAt).getTime());
+      const r = await issueOtp(transactionId, user.id);
+      setDevCode(r.devCode);
+      setExpiresAt(new Date(r.expiresAt).getTime());
       setRemainingAttempts(3);
       toast.success("Verification code sent");
     } catch (err) {
@@ -74,7 +54,7 @@ export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVeri
   };
 
   useEffect(() => {
-    if (open && transactionId) {
+    if (open && transactionId && user) {
       sendCode();
     }
     if (!open) {
@@ -84,7 +64,7 @@ export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVeri
       setRemainingAttempts(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, transactionId]);
+  }, [open, transactionId, user?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -96,16 +76,10 @@ export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVeri
   const expired = expiresAt != null && secondsLeft <= 0;
 
   const submit = async () => {
-    if (!transactionId || code.length !== 6) return;
+    if (!transactionId || !user || code.length !== 6) return;
     setVerifying(true);
     try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess.session?.access_token;
-      const result = await verify({
-        data: { transactionId, code },
-        headers: { Authorization: `Bearer ${token}` },
-      } as never);
-      const r = result as { ok: boolean; reason?: string; remaining?: number; message?: string };
+      const r = await verifyOtp(transactionId, code, user.id);
       if (r.ok) {
         toast.success("Transfer completed");
         onVerified();
@@ -121,8 +95,10 @@ export function OtpModal({ open, transactionId, recipientEmail, onCancel, onVeri
         toast.error("Too many attempts. Send a new code.");
       } else if (r.reason === "no_active_otp") {
         toast.error("No active code. Send one first.");
+      } else if (r.reason === "complete_failed") {
+        toast.error(r.message ?? "Could not complete transfer");
       } else {
-        toast.error(r.message ?? "Verification failed");
+        toast.error("Verification failed");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Verification failed");
