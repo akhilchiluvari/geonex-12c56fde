@@ -35,6 +35,12 @@ export const Route = createRootRoute({
       { name: "author", content: "GEONEX" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:title", content: "GEONEX — AI-Powered Digital Banking" },
+      { name: "twitter:title", content: "GEONEX — AI-Powered Digital Banking" },
+      { property: "og:description", content: "Adaptive AI fraud detection and geo-lock security for modern banking." },
+      { name: "twitter:description", content: "Adaptive AI fraud detection and geo-lock security for modern banking." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f33f7f0b-0243-4fc4-b5d9-cdc1b0c31b38" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f33f7f0b-0243-4fc4-b5d9-cdc1b0c31b38" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
