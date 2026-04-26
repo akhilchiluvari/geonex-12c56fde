@@ -127,10 +127,10 @@ export const evaluateAndCreateTransfer = createServerFn({ method: "POST" })
     await supabase.from("risk_assessments").insert({
       user_id: userId,
       transaction_id: txnRow.id,
-      features: features as unknown as Record<string, unknown>,
+      features: features as unknown as never,
       risk_score: risk.risk_score,
       risk_tier: risk.tier,
-      top_factors: risk.top_factors as unknown as Record<string, unknown>,
+      top_factors: risk.top_factors as unknown as never,
       reasoning: risk.reasoning,
       model_name: risk.model,
     });
