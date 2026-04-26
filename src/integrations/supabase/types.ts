@@ -497,6 +497,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_transfer: {
+        Args: { _transaction_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
