@@ -27,12 +27,11 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const navItems: { to: "/app" | "/app/accounts" | "/app/transfer" | "/app/statements" | "/app/admin"; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean }[] = [
+const navItems: { to: "/app" | "/app/accounts" | "/app/transfer" | "/app/statements"; label: string; icon: React.ComponentType<{ className?: string }>; adminOnly?: boolean }[] = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/accounts", label: "Accounts", icon: Wallet },
   { to: "/app/transfer", label: "Transfer", icon: ArrowLeftRight },
   { to: "/app/statements", label: "Statements", icon: Receipt },
-  { to: "/app/admin", label: "Admin", icon: ShieldAlert, adminOnly: true },
 ];
 
 export function AppLayout() {
