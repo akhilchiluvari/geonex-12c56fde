@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: geonex-banking-core
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://db.bjytecimszmnjqyosugr.supabase.co:5432/postgres}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+
+geonex:
+  supabase:
+    jwt-secret: ${SUPABASE_JWT_SECRET:}
